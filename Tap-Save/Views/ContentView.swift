@@ -95,14 +95,24 @@ struct ContentView: View {
                     .tag(0)
                     
                     NavigationStack {
+                        SavingGoalsView()
+                            .transition(.move(edge: .trailing))
+                    }
+                    .tabItem {
+                        Label("Metas", systemImage: "star.fill")
+                            .symbolEffect(.bounce, value: selectedTab == 1)
+                    }
+                    .tag(1)
+                    
+                    NavigationStack {
                         StatisticsView(expenses: expenses)
                             .transition(.move(edge: .trailing))
                     }
                     .tabItem {
                         Label("Estadísticas", systemImage: "chart.pie.fill")
-                            .symbolEffect(.bounce, value: selectedTab == 1)
+                            .symbolEffect(.bounce, value: selectedTab == 2)
                     }
-                    .tag(1)
+                    .tag(2)
                     
                     NavigationStack {
                         BudgetView()
@@ -110,9 +120,9 @@ struct ContentView: View {
                     }
                     .tabItem {
                         Label("Presupuestos", systemImage: "chart.bar.fill")
-                            .symbolEffect(.bounce, value: selectedTab == 2)
+                            .symbolEffect(.bounce, value: selectedTab == 3)
                     }
-                    .tag(2)
+                    .tag(3)
                     
                     NavigationStack {
                         SettingsView()
@@ -120,9 +130,9 @@ struct ContentView: View {
                     }
                     .tabItem {
                         Label("Ajustes", systemImage: "gear")
-                            .symbolEffect(.bounce, value: selectedTab == 3)
+                            .symbolEffect(.bounce, value: selectedTab == 4)
                     }
-                    .tag(3)
+                    .tag(4)
                 }
                 .sheet(isPresented: $isShowingAddExpense) {
                     NavigationStack {
@@ -521,7 +531,8 @@ extension Color {
         let schema = Schema([
             Expense.self,
             Category.self,
-            Budget.self
+            Budget.self,
+            SavingGoal.self
         ])
         let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
         let container = try ModelContainer(for: schema, configurations: [config])

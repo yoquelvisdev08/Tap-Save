@@ -17,7 +17,8 @@ struct Tap_SaveApp: App {
         let schema = Schema([
             Expense.self,
             Category.self,
-            Budget.self
+            Budget.self,
+            SavingGoal.self
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
         

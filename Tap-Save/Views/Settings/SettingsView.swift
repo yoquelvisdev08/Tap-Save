@@ -33,6 +33,9 @@ struct AppColors {
 struct SettingsView: View {
     @Environment(\.modelContext) private var modelContext
     @StateObject private var currencySettings = CurrencySettings.shared
+    @State private var showExportAlert = false
+    @State private var exportAlertTitle = ""
+    @State private var exportAlertMessage = ""
     
     var body: some View {
         NavigationStack {
@@ -42,6 +45,13 @@ struct SettingsView: View {
                 aboutSection
             }
             .navigationTitle("Ajustes")
+            .alert(isPresented: $showExportAlert) {
+                Alert(
+                    title: Text(exportAlertTitle),
+                    message: Text(exportAlertMessage),
+                    dismissButton: .default(Text("Aceptar"))
+                )
+            }
         }
     }
     
@@ -71,9 +81,15 @@ struct SettingsView: View {
     private var exportSection: some View {
         Section("Exportar Datos") {
             Button(action: {
-                // TODO: Implementar exportación
+                exportExpensesToCSV(saveToFiles: false)
             }) {
-                Label("Exportar a CSV", systemImage: "square.and.arrow.up")
+                Label("Exportar y compartir CSV", systemImage: "square.and.arrow.up")
+            }
+            
+            Button(action: {
+                exportExpensesToCSV(saveToFiles: true)
+            }) {
+                Label("Guardar en Archivos", systemImage: "folder.badge.plus")
             }
         }
     }
@@ -84,6 +100,54 @@ struct SettingsView: View {
             Link(destination: URL(string: "https://github.com/yourusername/TapAndSave")!) {
                 Label("Código Fuente", systemImage: "swift")
             }
+        }
+    }
+    
+    private func exportExpensesToCSV(saveToFiles: Bool) {
+        // Obtener todos los gastos
+        let modelContext = modelContext
+        let fetchDescriptor = FetchDescriptor<Expense>()
+        
+        do {
+            let expenses = try modelContext.fetch(fetchDescriptor)
+            
+            // Si no hay gastos, mostrar un mensaje
+            guard !expenses.isEmpty else {
+                exportAlertTitle = "Sin datos"
+                exportAlertMessage = "No hay gastos para exportar."
+                showExportAlert = true
+                return
+            }
+            
+            // Generar el CSV
+            let csvString = CSVExportService.shared.exportExpensesToCSV(expenses: expenses)
+            
+            if saveToFiles {
+                // Guardar directamente en la app Archivos
+                saveCSVToFiles(csvString: csvString) { success in
+                    if success {
+                        print("Archivo guardado con éxito en Archivos")
+                    } else {
+                        print("Error o cancelación al guardar en Archivos")
+                    }
+                }
+            } else {
+                // Compartir el CSV con callback
+                shareCSV(csvString: csvString) { success in
+                    if success {
+                        // El usuario completó la acción de compartir exitosamente
+                        print("Exportación completada con éxito")
+                    } else {
+                        // El usuario canceló o hubo un error
+                        print("Exportación cancelada o fallida")
+                    }
+                }
+            }
+        } catch {
+            exportAlertTitle = "Error"
+            exportAlertMessage = "No se pudieron exportar los gastos: \(error.localizedDescription)"
+            showExportAlert = true
+            print("Error al obtener los gastos: \(error.localizedDescription)")
         }
     }
 }
